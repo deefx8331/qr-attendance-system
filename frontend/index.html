@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Attendance System - Bayero University Kano</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #1a5f2a;
+            --secondary-color: #ffc107;
+            --dark-color: #0d3015;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+        
+        /* Navbar */
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.4rem;
+        }
+        
+        .navbar-brand img {
+            height: 45px;
+            margin-right: 10px;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: 260px;
+            height: calc(100vh - 70px);
+            background: #fff;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            padding: 20px 0;
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 25px;
+            color: #555;
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .sidebar-link:hover, .sidebar-link.active {
+            background: #f0f7f1;
+            color: var(--primary-color);
+            border-left-color: var(--primary-color);
+        }
+        
+        .sidebar-link i {
+            width: 25px;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+        
+        .sidebar-divider {
+            height: 1px;
+            background: #eee;
+            margin: 15px 20px;
+        }
+        
+        .sidebar-header {
+            padding: 10px 25px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+            min-height: calc(100vh - 70px);
+            margin-top: 70px;
+        }
+        
+        /* Cards */
+        .stat-card {
+            background: #fff;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card .icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #fff;
+        }
+        
+        .stat-card .icon.bg-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .stat-card .icon.bg-success { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .stat-card .icon.bg-warning { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .stat-card .icon.bg-info { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        
+        .stat-card h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 15px 0 5px;
+        }
+        
+        .stat-card p {
+            color: #888;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        
+        /* Page Cards */
+        .page-card {
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+        
+        .page-card-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .page-card-header h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .page-card-body {
+            padding: 25px;
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background: var(--dark-color);
+            border-color: var(--dark-color);
+        }
+        
+        /* QR Code Display */
+        .qr-display {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .qr-display img {
+            max-width: 300px;
+            border: 5px solid var(--primary-color);
+            border-radius: 15px;
+            padding: 15px;
+            background: #fff;
+        }
+        
+        .qr-timer {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 20px 0;
+        }
+        
+        .qr-timer.expired {
+            color: #dc3545;
+        }
+        
+        /* Scanner */
+        #qr-reader {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        #qr-reader video {
+            border-radius: 15px;
+        }
+        
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .table thead th {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Login/Register Page */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+            padding: 20px;
+        }
+        
+        .auth-card {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            max-width: 450px;
+            width: 100%;
+        }
+        
+        .auth-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+            color: #fff;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .auth-header img {
+            height: 80px;
+            margin-bottom: 15px;
+        }
+        
+        .auth-header h4 {
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .auth-header p {
+            margin: 10px 0 0;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+        
+        .auth-body {
+            padding: 40px 30px;
+        }
+        
+        .auth-body .form-control {
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 2px solid #eee;
+        }
+        
+        .auth-body .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: none;
+        }
+        
+        .auth-body .btn-primary {
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: 600;
+        }
+        
+        /* Badge */
+        .badge-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+        
+        .badge-present {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-absent {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        /* Alert */
+        .custom-alert {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Responsive */
+        @media (max-width: 991px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        /* Hide pages by default */
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        /* Print Styles */
+        @media print {
+            .sidebar, .navbar, .no-print {
+                display: none !important;
+            }
+            
+            .main-content {
+                margin-left: 0 !important;
+                margin-top: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ==================== LOGIN PAGE ==================== -->
+    <div id="loginPage" class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <i class="fas fa-university fa-3x mb-3"></i>
+                <h4>QR Attendance System</h4>
+                <p>Bayero University, Kano</p>
+            </div>
+            <div class="auth-body">
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="loginEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </button>
+                    <p class="text-center mb-0">
+                        Don't have an account? 
+                        <a href="#" onclick="showRegister()" class="text-decoration-none">Register</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== REGISTER PAGE ==================== -->
+    <div id="registerPage" class="auth-container" style="display: none;">
+        <div class="auth-card">
+            <div class="auth-header">
+                <i class="fas fa-user-plus fa-3x mb-3"></i>
+                <h4>Create Account</h4>
+                <p>Register for QR Attendance System</p>
+            </div>
+            <div class="auth-body">
+                <form id="registerForm">
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="regFullName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="regEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="regPassword" required minlength="6">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Role</label>
+                        <select class="form-select" id="regRole" required onchange="toggleStudentFields()">
+                            <option value="student">Student</option>
+                            <option value="lecturer">Lecturer</option>
+                        </select>
+                    </div>
+                    <div id="studentFields">
+                        <div class="mb-3">
+                            <label class="form-label">Registration Number</label>
+                            <input type="text" class="form-control" id="regNumber" placeholder="e.g., BUK/CS/20/1001">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Level</label>
+                            <select class="form-select" id="regLevel">
+                                <option value="100">100 Level</option>
+                                <option value="200">200 Level</option>
+                                <option value="300">300 Level</option>
+                                <option value="400">400 Level</option>
+                                <option value="500">500 Level</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Faculty</label>
+                        <input type="text" class="form-control" id="regFaculty" placeholder="e.g., Computing">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Department</label>
+                        <input type="text" class="form-control" id="regDepartment" placeholder="e.g., Computer Science">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                        <i class="fas fa-user-plus me-2"></i>Register
+                    </button>
+                    <p class="text-center mb-0">
+                        Already have an account? 
+                        <a href="#" onclick="showLogin()" class="text-decoration-none">Login</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MAIN APP ==================== -->
+    <div id="mainApp" style="display: none;">
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+            <div class="container-fluid">
+                <button class="btn btn-link text-white d-lg-none me-2" onclick="toggleSidebar()">
+                    <i class="fas fa-bars fa-lg"></i>
+                </button>
+                <a class="navbar-brand" href="#">
+                    <i class="fas fa-qrcode me-2"></i>
+                    BUK QR Attendance
+                </a>
+                <div class="ms-auto d-flex align-items-center">
+                    <span class="text-white me-3 d-none d-md-inline">
+                        <i class="fas fa-user-circle me-1"></i>
+                        <span id="navUserName">User</span>
+                    </span>
+                    <button class="btn btn-outline-light btn-sm" onclick="logout()">
+                        <i class="fas fa-sign-out-alt me-1"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">Main Menu</div>
+            
+            <!-- Common Links -->
+            <a href="#" class="sidebar-link active" onclick="showPage('dashboard')">
+                <i class="fas fa-tachometer-alt"></i>Dashboard
+            </a>
+            
+            <!-- Student Links -->
+            <div id="studentMenu">
+                <a href="#" class="sidebar-link" onclick="showPage('scanQR')">
+                    <i class="fas fa-qrcode"></i>Scan Attendance
+                </a>
+                <a href="#" class="sidebar-link" onclick="showPage('myAttendance')">
+                    <i class="fas fa-clipboard-check"></i>My Attendance
+                </a>
+                <a href="#" class="sidebar-link" onclick="showPage('myCourses')">
+                    <i class="fas fa-book"></i>My Courses
+                </a>
+            </div>
+            
+            <!-- Lecturer Links -->
+            <div id="lecturerMenu" style="display: none;">
+                <a href="#" class="sidebar-link" onclick="showPage('manageCourses')">
+                    <i class="fas fa-book"></i>My Courses
+                </a>
+                <a href="#" class="sidebar-link" onclick="showPage('generateQR')">
+                    <i class="fas fa-qrcode"></i>Generate QR Code
+                </a>
+                <a href="#" class="sidebar-link" onclick="showPage('viewAttendance')">
+                    <i class="fas fa-users"></i>View Attendance
+                </a>
+                <a href="#" class="sidebar-link" onclick="showPage('reports')">
+                    <i class="fas fa-chart-bar"></i>Reports
+                </a>
+            </div>
+            
+            <!-- Admin Links -->
+            <div id="adminMenu" style="display: none;">
+                <div class="sidebar-divider"></div>
+                <div class="sidebar-header">Administration</div>
+                <a href="#" class="sidebar-link" onclick="showPage('manageUsers')">
+                    <i class="fas fa-users-cog"></i>Manage Users
+                </a>
+                <a href="#" class="sidebar-link" onclick="showPage('allCourses')">
+                    <i class="fas fa-book-open"></i>All Courses
+                </a>
+            </div>
+            
+            <div class="sidebar-divider"></div>
+            <a href="#" class="sidebar-link" onclick="showPage('profile')">
+                <i class="fas fa-user-cog"></i>Profile
+            </a>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Page -->
+            <div id="dashboardPage" class="page active">
+                <h4 class="mb-4">Dashboard</h4>
+                
+                <!-- Stats Cards -->
+                <div class="row mb-4" id="statsCards">
+                    <!-- Stats will be loaded dynamically -->
+                </div>
+                
+                <!-- Recent Activity -->
+                <div class="page-card">
+                    <div class="page-card-header">
+                        <h5><i class="fas fa-history me-2"></i>Recent Activity</h5>
+                    </div>
+                    <div class="page-card-body">
+                        <div id="recentActivity">
+                            <p class="text-muted">Loading recent activity...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scan QR Page (Student) -->
+            <div id="scanQRPage" class="page">
+                <h4 class="mb-4">Scan Attendance QR Code</h4>
+                <div class="page-card">
+                    <div class="page-card-body text-center">
+                        <p class="mb-4">Position the QR code within the camera frame to mark your attendance.</p>
+                        <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 0 auto;"></div>
+                        <div id="scanResult" class="mt-4" style="display: none;">
+                            <div class="alert" id="scanAlert"></div>
+                        </div>
+                        <button class="btn btn-primary mt-3" onclick="startScanner()">
+                            <i class="fas fa-camera me-2"></i>Start Scanner
+                        </button>
+                        <button class="btn btn-secondary mt-3" onclick="stopScanner()" style="display: none;" id="stopScanBtn">
+                            <i class="fas fa-stop me-2"></i>Stop Scanner
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Attendance Page (Student) -->
+            <div id="myAttendancePage" class="page">
+                <h4 class="mb-4">My Attendance History</h4>
+                <div class="page-card">
+                    <div class="page-card-body">
+                        <div class="table-container">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Course</th>
+                                        <th>Session</th>
+                                        <th>Date & Time</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendanceHistoryTable">
+                                    <tr><td colspan="4" class="text-center">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Courses Page (Student) -->
+            <div id="myCoursesPage" class="page">
+                <h4 class="mb-4">My Enrolled Courses</h4>
+                <div class="row" id="enrolledCoursesList">
+                    <div class="col-12 text-center">
+                        <p class="text-muted">Loading courses...</p>
+                    </div>
+                </div>
+                
+                <h5 class="mt-5 mb-3">Enroll in New Course</h5>
+                <div class="page-card">
+                    <div class="page-card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <input type="text" class="form-control" id="courseSearchInput" placeholder="Search by course code or title...">
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-primary w-100" onclick="searchCourses()">
+                                    <i class="fas fa-search me-2"></i>Search
+                                </button>
+                            </div>
+                        </div>
+                        <div id="courseSearchResults" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manage Courses Page (Lecturer) -->
+            <div id="manageCoursesPage" class="page">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">My Courses</h4>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+                        <i class="fas fa-plus me-2"></i>Add Course
+                    </button>
+                </div>
+                <div class="row" id="lecturerCoursesList">
+                    <div class="col-12 text-center">
+                        <p class="text-muted">Loading courses...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generate QR Page (Lecturer) -->
+            <div id="generateQRPage" class="page">
+                <h4 class="mb-4">Generate Attendance QR Code</h4>
+                <div class="row">
+                    <div class="col-lg-5">
+                        <div class="page-card">
+                            <div class="page-card-header">
+                                <h5><i class="fas fa-cog me-2"></i>Session Settings</h5>
+                            </div>
+                            <div class="page-card-body">
+                                <form id="generateQRForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">Select Course</label>
+                                        <select class="form-select" id="qrCourseSelect" required>
+                                            <option value="">-- Select Course --</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Session Title</label>
+                                        <input type="text" class="form-control" id="sessionTitle" placeholder="e.g., Week 5 Lecture">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">QR Code Validity (Minutes)</label>
+                                        <select class="form-select" id="qrDuration">
+                                            <option value="5">5 minutes</option>
+                                            <option value="10">10 minutes</option>
+                                            <option value="15" selected>15 minutes</option>
+                                            <option value="30">30 minutes</option>
+                                            <option value="60">1 hour</option>
+                                            <option value="120">2 hours</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-qrcode me-2"></i>Generate QR Code
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="page-card">
+                            <div class="page-card-header">
+                                <h5><i class="fas fa-qrcode me-2"></i>Generated QR Code</h5>
+                            </div>
+                            <div class="page-card-body qr-display" id="qrCodeDisplay">
+                                <div class="text-muted">
+                                    <i class="fas fa-qrcode fa-5x mb-3 opacity-25"></i>
+                                    <p>Configure settings and click "Generate QR Code" to create an attendance session.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View Attendance Page (Lecturer) -->
+            <div id="viewAttendancePage" class="page">
+                <h4 class="mb-4">View Attendance</h4>
+                <div class="page-card">
+                    <div class="page-card-header">
+                        <h5><i class="fas fa-filter me-2"></i>Filter</h5>
+                    </div>
+                    <div class="page-card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="form-label">Course</label>
+                                <select class="form-select" id="attendanceCourseFilter" onchange="loadCourseSessions()">
+                                    <option value="">-- Select Course --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Session</label>
+                                <select class="form-select" id="attendanceSessionFilter" onchange="loadSessionAttendance()">
+                                    <option value="">-- Select Session --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button class="btn btn-outline-primary w-100" onclick="exportAttendance()">
+                                    <i class="fas fa-download me-2"></i>Export
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="page-card mt-4">
+                    <div class="page-card-header">
+                        <h5><i class="fas fa-list me-2"></i>Attendance List</h5>
+                        <span class="badge bg-primary" id="attendanceCount">0 students</span>
+                    </div>
+                    <div class="page-card-body">
+                        <div class="table-container">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>S/N</th>
+                                        <th>Reg. Number</th>
+                                        <th>Name</th>
+                                        <th>Time Marked</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sessionAttendanceTable">
+                                    <tr><td colspan="5" class="text-center text-muted">Select a course and session to view attendance</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Page (Lecturer) -->
+            <div id="reportsPage" class="page">
+                <h4 class="mb-4">Attendance Reports</h4>
+                <div class="page-card">
+                    <div class="page-card-header">
+                        <h5><i class="fas fa-book me-2"></i>Select Course</h5>
+                    </div>
+                    <div class="page-card-body">
+                        <select class="form-select" id="reportCourseSelect" onchange="loadCourseReport()">
+                            <option value="">-- Select Course --</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="page-card mt-4" id="reportCard" style="display: none;">
+                    <div class="page-card-header">
+                        <h5><i class="fas fa-chart-bar me-2"></i>Attendance Summary</h5>
+                        <button class="btn btn-sm btn-outline-primary" onclick="printReport()">
+                            <i class="fas fa-print me-2"></i>Print Report
+                        </button>
+                    </div>
+                    <div class="page-card-body">
+                        <div class="table-container">
+                            <table class="table table-bordered" id="reportTable">
+                                <thead>
+                                    <tr>
+                                        <th>S/N</th>
+                                        <th>Reg. Number</th>
+                                        <th>Name</th>
+                                        <th>Present</th>
+                                        <th>Absent</th>
+                                        <th>Percentage</th>
+                                        <th>Remark</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Page -->
+            <div id="profilePage" class="page">
+                <h4 class="mb-4">My Profile</h4>
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="page-card text-center">
+                            <div class="page-card-body">
+                                <i class="fas fa-user-circle fa-5x text-muted mb-3"></i>
+                                <h5 id="profileName">-</h5>
+                                <span class="badge bg-primary" id="profileRole">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="page-card">
+                            <div class="page-card-header">
+                                <h5><i class="fas fa-info-circle me-2"></i>Account Information</h5>
+                            </div>
+                            <div class="page-card-body">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th style="width: 150px;">Email:</th>
+                                        <td id="profileEmail">-</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Reg. Number:</th>
+                                        <td id="profileRegNumber">-</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Faculty:</th>
+                                        <td id="profileFaculty">-</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Department:</th>
+                                        <td id="profileDepartment">-</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Level:</th>
+                                        <td id="profileLevel">-</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Joined:</th>
+                                        <td id="profileJoined">-</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin: Manage Users Page -->
+            <div id="manageUsersPage" class="page">
+                <h4 class="mb-4">Manage Users</h4>
+                <div class="page-card">
+                    <div class="page-card-header">
+                        <h5><i class="fas fa-users me-2"></i>All Users</h5>
+                    </div>
+                    <div class="page-card-body">
+                        <div class="table-container">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Reg. Number</th>
+                                        <th>Role</th>
+                                        <th>Department</th>
+                                        <th>Joined</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTable">
+                                    <tr><td colspan="6" class="text-center">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin: All Courses Page -->
+            <div id="allCoursesPage" class="page">
+                <h4 class="mb-4">All Courses</h4>
+                <div class="page-card">
+                    <div class="page-card-body">
+                        <div class="table-container">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Title</th>
+                                        <th>Lecturer</th>
+                                        <th>Department</th>
+                                        <th>Students</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="allCoursesTable">
+                                    <tr><td colspan="5" class="text-center">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Course Modal -->
+    <div class="modal fade" id="addCourseModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Add New Course</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addCourseForm">
+                        <div class="mb-3">
+                            <label class="form-label">Course Code</label>
+                            <input type="text" class="form-control" id="newCourseCode" required placeholder="e.g., CSC 401">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Course Title</label>
+                            <input type="text" class="form-control" id="newCourseTitle" required placeholder="e.g., Software Engineering">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Department</label>
+                            <input type="text" class="form-control" id="newCourseDept" placeholder="e.g., Computer Science">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Faculty</label>
+                            <input type="text" class="form-control" id="newCourseFaculty" placeholder="e.g., Computing">
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Level</label>
+                                    <select class="form-select" id="newCourseLevel">
+                                        <option value="100">100</option>
+                                        <option value="200">200</option>
+                                        <option value="300">300</option>
+                                        <option value="400">400</option>
+                                        <option value="500">500</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Semester</label>
+                                    <select class="form-select" id="newCourseSemester">
+                                        <option value="First">First</option>
+                                        <option value="Second">Second</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="addCourse()">Add Course</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
