@@ -48,15 +48,7 @@ const initDB = async () => {
 initDB();
 
 
-const initDB = async () => {
-    try {
-        const schema = fs.readFileSync(require('path').join(__dirname, '../database/schema.sql'), 'utf8');
-        const cleanSchema = schema.replace(/CREATE DATABASE.*?;/gi, '').replace(/USE.*?;/gi, '').split(';').filter(s => s.trim());
-        for (const s of cleanSchema) { if (s.trim()) await pool.query(s).catch(()=>{}); }
-        console.log('✅ DB schema initialized');
-    } catch(e) { console.error('❌', e.message); }
-};
-initDB();
+
 
 // ==================== AUTHENTICATION MIDDLEWARE ====================
 const authenticateToken = (req, res, next) => {
