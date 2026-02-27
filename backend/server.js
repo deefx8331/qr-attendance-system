@@ -31,6 +31,22 @@ const pool = dbUrl
         queueLimit: 0
     });
 
+// Auto-run schema on startup
+const fs = require("fs");
+const initDB = async () => {
+    try {
+        const schema = fs.readFileSync(path.join(__dirname, "../database/schema.sql"), "utf8");
+        const cleanSchema = schema.replace(/CREATE DATABASE.*?;/gi, "").replace(/USE.*?;/gi, "").split(";").filter(s => s.trim());
+        for (const statement of cleanSchema) {
+            if (statement.trim()) {
+                await pool.query(statement).catch(err => { if (!err.message.includes("already exists")) console.log("Schema warning:", err.message); });
+            }
+        }
+        console.log("✅ Database schema initialized");
+    } catch (err) { console.error("❌ Schema init error:", err.message); }
+};
+initDB();
+
 // ==================== AUTHENTICATION MIDDLEWARE ====================
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
